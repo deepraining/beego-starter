@@ -70,3 +70,7 @@ sh run.sh version      # 查看程序版本
 ## 前端配套项目
 
 - [sbs-admin-web](https://github.com/senntyou/sbs-admin-web)
+
+## 参考项目
+
+- [mindoc](https://github.com/mindoc-org/mindoc)

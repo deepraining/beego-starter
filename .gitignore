@@ -15,7 +15,11 @@ coverage*.out
 GoBuilds
 dist
 vendor
+lastupdate.tmp
 
 /beego-starter
 beego-starter-*
 /beego-starter.exe
+
+# flyway
+flyway*.conf
