@@ -1,72 +1,107 @@
 package service
 
 import (
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/jinzhu/copier"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/utils"
 )
 
 // 修改菜单层级
-func updateAdminMenuLevel(adminMenu *models.AdminMenu) {
+func updateAdminMenuLevel(adminMenu *models.AdminMenu) error {
     if adminMenu.ParentId == 0 {
         // 没有父菜单时为一级菜单
         adminMenu.Level = 0
     } else {
         parentAdminMenu := &models.AdminMenu{}
         // 有父菜单时选择根据父菜单level设置
-        utils.GetDB().First(parentAdminMenu, adminMenu.ParentId)
+        result := utils.GetDB().First(parentAdminMenu, adminMenu.ParentId)
+        if result.Error != nil {
+            logs.Error(result.Error)
+            return result.Error
+        }
         if parentAdminMenu.Id > 0 {
             adminMenu.Level = parentAdminMenu.Level + 1
         }else {
             adminMenu.Level = 0
         }
     }
+    return nil
 }
 
 // 创建菜单
-func CreateAdminMenu(adminMenu *models.AdminMenu) int64 {
-    updateAdminMenuLevel(adminMenu)
+func CreateAdminMenu(adminMenu *models.AdminMenu) (error, int64) {
+    err := updateAdminMenuLevel(adminMenu)
+    if err != nil {
+        logs.Error(err)
+        return err, 0
+    }
     result := utils.GetDB().Create(adminMenu)
-    return result.RowsAffected
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
 }
 
 // 更新菜单
-func UpdateAdminMenu(id int64, adminMenu *models.AdminMenu) int64 {
+func UpdateAdminMenu(id int64, adminMenu *models.AdminMenu) (error, int64) {
     adminMenu.Id = id
-    updateAdminMenuLevel(adminMenu)
+    err := updateAdminMenuLevel(adminMenu)
+    if err != nil {
+        logs.Error(err)
+        return err, 0
+    }
     result := utils.GetDB().Updates(adminMenu)
-    return result.RowsAffected
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
 }
 
 // 更新菜单隐藏选项
-func UpdateAdminMenuHidden(id int64, hidden int64) int64 {
+func UpdateAdminMenuHidden(id int64, hidden int64) (error, int64) {
     adminMenu := &models.AdminMenu{
         Id:     id,
         Hidden: int32(hidden),
     }
     result := utils.GetDB().Updates(adminMenu)
-    return result.RowsAffected
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
 }
 
 // 获取菜单
-func GetAdminMenu(id int64) *models.AdminMenu {
+func GetAdminMenu(id int64) (error, *models.AdminMenu) {
     adminMenu := &models.AdminMenu{}
-    utils.GetDB().First(adminMenu, id)
-    if adminMenu.Id > 0 {
-        return adminMenu
+    result := utils.GetDB().First(adminMenu, id)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil
     }
-    return nil
+    if adminMenu.Id > 0 {
+        return nil, adminMenu
+    }
+    return nil, nil
 }
 
 // 删除菜单
-func DeleteAdminMenu(id int64) int64 {
+func DeleteAdminMenu(id int64) (error, int64) {
     adminMenu := &models.AdminMenu{}
     result := utils.GetDB().Delete(adminMenu, id)
-    return result.RowsAffected
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
 }
 
 
 // 菜单列表
-func AdminMenuList(parentId int64, pageSize int64, pageNum int64) (*[]models.AdminMenu, int64) {
+func AdminMenuList(parentId int64, pageSize int64, pageNum int64) (error, *[]models.AdminMenu, int64) {
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
@@ -74,28 +109,36 @@ func AdminMenuList(parentId int64, pageSize int64, pageNum int64) (*[]models.Adm
     list := &[]models.AdminMenu{}
     var total int64 = 0
     query.Count(&total)
-    query.Order("sort desc").Limit(int(limit)).Offset(int(offset)).Find(list)
-    return list, total
+    result := query.Order("sort desc").Limit(int(limit)).Offset(int(offset)).Find(list)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil, 0
+    }
+    return nil, list, total
 }
 
 // 树形菜单列表
-func AdminMenuTreeList() *[]models.AdminMenuNode  {
+func AdminMenuTreeList() (error, *[]models.AdminMenuNode)  {
     list := &[]models.AdminMenu{}
-    utils.GetDB().Order("sort desc").Find(list)
+    result := utils.GetDB().Order("sort desc").Find(list)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil
+    }
 
-    result := []models.AdminMenuNode{}
+    nodes := []models.AdminMenuNode{}
     for _, item := range *list{
         // 根菜单
         if item.ParentId == 0 {
-            result = append(result, *convertAdminMenuNode(&item, list))
+            nodes = append(nodes, *convertAdminMenuNode(&item, list))
         }
     }
-    return &result
+    return nil, &nodes
 }
 
 func convertAdminMenuNode(adminMenu *models.AdminMenu, list *[]models.AdminMenu) *models.AdminMenuNode {
     adminMenuNode := &models.AdminMenuNode{}
-    utils.CopyStructFields(adminMenu, adminMenuNode)
+    copier.Copy(adminMenuNode, adminMenu)
 
     children := []models.AdminMenuNode{}
     for _, item := range *list{

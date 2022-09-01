@@ -1,44 +1,61 @@
 package service
 
 import (
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/utils"
 )
 
 // 创建资源
-func CreateAdminResource(adminResource *models.AdminResource) int64 {
+func CreateAdminResource(adminResource *models.AdminResource) (error, int64) {
     result := utils.GetDB().Create(adminResource)
-    return result.RowsAffected
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
 }
 
 // 更新资源
-func UpdateAdminResource(id int64, adminResource *models.AdminResource) int64 {
+func UpdateAdminResource(id int64, adminResource *models.AdminResource) (error, int64) {
     adminResource.Id = id
     result := utils.GetDB().Updates(adminResource)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
     DelAdminResourceListByResourceCache(id);
-    return result.RowsAffected
+    return nil, result.RowsAffected
 }
 
 // 获取资源
-func GetAdminResource(id int64) *models.AdminResource {
+func GetAdminResource(id int64) (error, *models.AdminResource) {
     adminResource := &models.AdminResource{}
-    utils.GetDB().First(adminResource, id)
-    if adminResource.Id > 0 {
-        return adminResource
+    result := utils.GetDB().First(adminResource, id)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil
     }
-    return nil
+    if adminResource.Id > 0 {
+        return nil, adminResource
+    }
+    return nil, nil
 }
 
 // 删除资源
-func DeleteAdminResource(id int64) int64 {
+func DeleteAdminResource(id int64) (error, int64) {
     adminResource := &models.AdminResource{}
     result := utils.GetDB().Delete(adminResource, id)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
     DelAdminResourceListByResourceCache(id);
-    return result.RowsAffected
+    return nil, result.RowsAffected
 }
 
 // 资源列表
-func AdminResourceList(categoryId int64, nameKeyword string, urlKeyword string, pageSize int64, pageNum int64) (*[]models.AdminResource, int64) {
+func AdminResourceList(categoryId int64, nameKeyword string, urlKeyword string, pageSize int64, pageNum int64) (error, *[]models.AdminResource, int64) {
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
@@ -56,13 +73,21 @@ func AdminResourceList(categoryId int64, nameKeyword string, urlKeyword string, 
     list := &[]models.AdminResource{}
     var total int64 = 0
     query.Count(&total)
-    query.Limit(int(limit)).Offset(int(offset)).Find(list)
-    return list, total
+    result := query.Limit(int(limit)).Offset(int(offset)).Find(list)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil, 0
+    }
+    return nil, list, total
 }
 
 // 资源列表
-func AdminResourceListAll() *[]models.AdminResource {
+func AdminResourceListAll() (error, *[]models.AdminResource) {
     list := &[]models.AdminResource{}
-    utils.GetDB().Find(list)
-    return list
+    result := utils.GetDB().Find(list)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil
+    }
+    return nil, list
 }

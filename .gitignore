@@ -16,6 +16,7 @@ GoBuilds
 dist
 vendor
 lastupdate.tmp
+logs
 
 /beego-starter
 beego-starter-*

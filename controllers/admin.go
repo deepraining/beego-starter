@@ -2,9 +2,10 @@ package controllers
 
 import (
     "encoding/json"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
     "math"
 )
 
@@ -22,14 +23,18 @@ func (c *AdminController) AdminRegister() {
     adminUserParam := &models.AdminUserParam{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminUserParam)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    adminUser := service.AdminRegister(adminUserParam)
+    err, adminUser := service.AdminRegister(adminUserParam)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if adminUser == nil {
         c.ApiFail("注册失败")
     }
-    c.JsonResult(models.SuccessResult(adminUser))
+    c.ApiSucceed(adminUser)
 }
 
 // 登录以后返回token
@@ -37,17 +42,21 @@ func (c *AdminController) AdminLogin() {
     adminLoginParam := &models.AdminLoginParam{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminLoginParam)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    token := service.AdminLogin(adminLoginParam.Username, adminLoginParam.Password)
+    err, token := service.AdminLogin(adminLoginParam.Username, adminLoginParam.Password)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if token == "" {
         c.ApiFail("登录失败")
     }
-    c.JsonResult(models.SuccessResult(&map[string]string{
+    c.ApiSucceed(&map[string]string{
         "token": token,
         "tokenHead": utils.TokenHead,
-    }))
+    })
 }
 
 // 刷新token
@@ -56,15 +65,18 @@ func (c *AdminController) AdminRefreshToken() {
     if token == "" {
         c.ApiFail("请先登录")
     }
-    newToken := service.AdminRefreshToken(token)
+    err, newToken := service.AdminRefreshToken(token)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if newToken == "" {
         c.ApiFail("token已经过期！")
     }
 
-    c.JsonResult(models.SuccessResult(&map[string]string{
+    c.ApiSucceed(&map[string]string{
         "token": token,
         "tokenHead": utils.TokenHead,
-    }))
+    })
 }
 
 // 获取当前登录用户信息
@@ -73,18 +85,25 @@ func (c *AdminController) AdminInfo() {
     if username == "" {
         c.JsonResult(models.UnauthorizedResult(nil))
     }
-    adminUser := service.GetAdminUserByUsername(username)
-    c.JsonResult(models.SuccessResult(&map[string]interface{}{
+    err, adminUser := service.GetAdminUserByUsername(username)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    err2, menus := service.AdminMenuListByUserId(adminUser.Id)
+    if err2 != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(&map[string]interface{}{
         "username": username,
         "roles": &[]string{"NONE"},
-        "menus": service.AdminMenuListByUserId(adminUser.Id),
+        "menus": menus,
         "avatar": adminUser.Avatar,
-    }))
+    })
 }
 
 // 登出功能
 func (c *AdminController) AdminLogout() {
-    c.JsonResult(models.SuccessResult(nil))
+    c.ApiSucceed(nil)
 }
 
 // 根据用户名或姓名分页获取用户列表
@@ -93,8 +112,11 @@ func (c *AdminController) AdminUserList() {
     pageSize := utils.StringToInt64(c.Ctx.Input.Query("pageSize"), 5)
     keyword := c.Ctx.Input.Query("keyword")
 
-    list, total := service.AdminUserList(keyword, pageSize, pageNum)
-    c.JsonResult(&map[string]interface{}{
+    err, list, total := service.AdminUserList(keyword, pageSize, pageNum)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(&map[string]interface{}{
         "pageNum": pageNum,
         "pageSize": pageSize,
         "pages": math.Ceil(float64(total)/float64(pageSize)),
@@ -106,7 +128,11 @@ func (c *AdminController) AdminUserList() {
 // 获取指定用户信息
 func (c *AdminController) AdminUserItem() {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    c.JsonResult(models.SuccessResult(service.GetAdminUserItem(id)))
+    err, data := service.GetAdminUserItem(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }
 
 // 修改指定用户信息
@@ -115,11 +141,15 @@ func (c *AdminController) AdminUserUpdate() {
     adminUser := &models.AdminUser{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminUser)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.UpdateAdminUser(id, adminUser)
-    c.JsonResult(models.SuccessResult(count))
+    err, count := service.UpdateAdminUser(id, adminUser)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(count)
 }
 
 // 修改指定用户密码
@@ -127,12 +157,16 @@ func (c *AdminController) AdminUserUpdatePassword() {
     param := &models.UpdateAdminUserPasswordParam{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, param)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    status := service.UpdateAdminPassword(param)
+    err, status := service.UpdateAdminPassword(param)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if status > 0 {
-        c.JsonResult(models.SuccessResult(status))
+        c.ApiSucceed(status)
     } else if status == -1 {
         c.ApiFail("提交参数不合法")
     } else if status == -2 {
@@ -147,11 +181,14 @@ func (c *AdminController) AdminUserUpdatePassword() {
 // 删除指定用户信息
 func (c *AdminController) AdminUserDelete() {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    count := service.DeleteAdminUser(id)
+    err, count := service.DeleteAdminUser(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -162,11 +199,14 @@ func (c *AdminController) AdminUserUpdateStatus() {
     adminUser := &models.AdminUser{
         Status: int32(status),
     }
-    count := service.UpdateAdminUser(id, adminUser)
+    err, count := service.UpdateAdminUser(id, adminUser)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -177,18 +217,25 @@ func (c *AdminController) AdminUserUpdateRole() {
     roleIdsStr := c.Ctx.Input.Query("roleIds")
     roleIds := &[]int64{}
     json.Unmarshal([]byte(roleIdsStr), roleIds)
-    count := service.UpdateAdminUserRole(userId, roleIds)
+    err, count := service.UpdateAdminUserRole(userId, roleIds)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 获取指定用户的角色
 func (c *AdminController) AdminUserRoleList() {
     userId := utils.StringToInt64(c.Ctx.Input.Params()["userId"], 0)
-    c.JsonResult(models.SuccessResult(service.AdminRoleListByUserId(userId)))
+    err, data := service.AdminRoleListByUserId(userId)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }
 
 // 给用户分配+-权限
@@ -198,16 +245,23 @@ func (c *AdminController) AdminUserUpdatePermission() {
     permissionIdsStr := c.Ctx.Input.Query("permissionIds")
     permissionIds := &[]int64{}
     json.Unmarshal([]byte(permissionIdsStr), permissionIds)
-    count := service.UpdateAdminUserPermission(userId, permissionIds)
+    err, count := service.UpdateAdminUserPermission(userId, permissionIds)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 获取用户所有权限（包括+-权限）
 func (c *AdminController) AdminUserPermissionList() {
     userId := utils.StringToInt64(c.Ctx.Input.Params()["userId"], 0)
-    c.JsonResult(models.SuccessResult(service.GetAdminPermissionList(userId)))
+    err, data := service.GetAdminPermissionList(userId)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }

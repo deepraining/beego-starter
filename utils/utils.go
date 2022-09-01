@@ -3,10 +3,11 @@ package utils
 import (
     "github.com/beego/beego/v2/core/logs"
     "golang.org/x/crypto/bcrypt"
-    "reflect"
     "strconv"
     "strings"
 )
+
+const CustomMsgPrefix = "CUSTOM:"
 
 func NormalizeUrl(url string) string {
     // 如果是非 / 页，且末尾有/的，去掉末尾的/
@@ -43,18 +44,6 @@ func MatchUrl(urls []string, path string) bool {
     return false
 }
 
-// 复制结构体属性(父->子)
-func CopyStructFields(source interface{}, target interface{})  {
-    sourceVal := reflect.ValueOf(source)
-    targetVal := reflect.ValueOf(target)
-    fieldsNum := sourceVal.NumField()
-    for i := 0; i < fieldsNum; i++ {
-        sourceField := sourceVal.Field(i)
-        targetField := targetVal.Field(i)
-        targetField.Set(sourceField.Elem())
-    }
-}
-
 // 加密密码
 func EncryptPassword(password string) string {
     hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
@@ -66,7 +55,7 @@ func EncryptPassword(password string) string {
 
 // 验证密码
 func ComparePassword(password string, encryptedPassword string) bool {
-    err := bcrypt.CompareHashAndPassword([]byte(password), []byte(encryptedPassword))
+    err := bcrypt.CompareHashAndPassword([]byte(encryptedPassword), []byte(password))
     if err != nil {
         logs.Error(err)
         return false
@@ -81,7 +70,17 @@ func StringToInt64(val string, defaults int64) int64 {
     }
     intVal, err := strconv.Atoi(val)
     if err != nil {
+        logs.Error(err)
         return defaults
     }
     return int64(intVal)
+}
+
+// 格式化错误响应信息
+func NormalizeErrorMessage(err error) string {
+    msg := err.Error()
+    if strings.HasPrefix(msg, CustomMsgPrefix) {
+        return msg[len(CustomMsgPrefix):]
+    }
+    return "服务器错误"
 }

@@ -1,9 +1,10 @@
 package service
 
 import (
-    "github.com/senntyou/beego-starter/cache"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/cache"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/utils"
     "strconv"
 )
 
@@ -16,7 +17,11 @@ const (
 
 // 删除用户缓存
 func DelAdminUserCache(userId int64)  {
-    adminUser := GetAdminUserItem(userId)
+    err, adminUser := GetAdminUserItem(userId)
+    if err != nil {
+        logs.Error(err)
+        return
+    }
     key := redisDatabase + ":" + redisKeyResourceList + ":" + adminUser.Username
     _ = cache.Delete(key)
 }

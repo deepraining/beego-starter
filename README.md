@@ -2,18 +2,12 @@
 
 用于快速创建 [Beego](https://beego.vip/) 应用的模板脚手架。
 
-## 特性
-
-- 使用 [Flyway](https://flywaydb.org/) 进行数据库版本化管理
-- 前后端完全分离，本项目将只用于写后端 Go 代码，前端代码需要另外建立一个项目
-- 使用 [snowflake](https://github.com/twitter-archive/snowflake) 算法生成分布式唯一 ID
-
 ## 创建项目
 
 克隆代码，然后根据需要调整项目与代码
 
 ```
-git clone https://github.com/senntyou/beego-starter.git yourProName --depth=1
+git clone https://github.com/deepraining/beego-starter.git yourProName --depth=1
 
 cd yourProName
 ```
@@ -69,8 +63,4 @@ sh run.sh version      # 查看程序版本
 
 ## 前端配套项目
 
-- [sbs-admin-web](https://github.com/senntyou/sbs-admin-web)
-
-## 参考项目
-
-- [mindoc](https://github.com/mindoc-org/mindoc)
+- [sbs-admin-web](https://github.com/deepraining/sbs-admin-web)

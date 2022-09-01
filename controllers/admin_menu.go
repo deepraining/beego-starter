@@ -2,9 +2,10 @@ package controllers
 
 import (
     "encoding/json"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
     "math"
 )
 
@@ -17,15 +18,19 @@ func (c *AdminMenuController) CreateAdminMenu()  {
     adminMenu := &models.AdminMenu{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminMenu)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.CreateAdminMenu(adminMenu)
+    err2, count := service.CreateAdminMenu(adminMenu)
+    if err2 != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -35,33 +40,44 @@ func (c *AdminMenuController) UpdateAdminMenu()  {
     adminMenu := &models.AdminMenu{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminMenu)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.UpdateAdminMenu(id, adminMenu)
+    err2, count := service.UpdateAdminMenu(id, adminMenu)
+    if err2 != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 根据ID获取菜单详情
 func (c *AdminMenuController) GetAdminMenuItem()  {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    c.JsonResult(models.SuccessResult(service.GetAdminMenu(id)))
+    err, data := service.GetAdminMenu(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }
 
 // 根据ID删除后台菜单
 func (c *AdminMenuController) DeleteAdminMenu()  {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    count := service.DeleteAdminMenu(id)
+    err, count := service.DeleteAdminMenu(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -71,8 +87,11 @@ func (c *AdminMenuController) AdminMenuList()  {
     pageNum := utils.StringToInt64(c.Ctx.Input.Query("pageNum"), 1)
     pageSize := utils.StringToInt64(c.Ctx.Input.Query("pageSize"), 5)
 
-    list, total := service.AdminMenuList(parentId, pageSize, pageNum)
-    c.JsonResult(&map[string]interface{}{
+    err, list, total := service.AdminMenuList(parentId, pageSize, pageNum)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(&map[string]interface{}{
         "pageNum": pageNum,
         "pageSize": pageSize,
         "pages": math.Ceil(float64(total)/float64(pageSize)),
@@ -83,7 +102,11 @@ func (c *AdminMenuController) AdminMenuList()  {
 
 // 树形结构返回所有菜单列表
 func (c *AdminMenuController) AdminMenuTreeList()  {
-    c.JsonResult(models.SuccessResult(service.AdminMenuTreeList()))
+    err, data := service.AdminMenuTreeList()
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }
 
 // 修改菜单显示状态
@@ -91,11 +114,14 @@ func (c *AdminMenuController) AdminMenuUpdateHidden()  {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
     hidden := utils.StringToInt64(c.Ctx.Input.Query("hidden"), 0)
 
-    count := service.UpdateAdminMenuHidden(id, hidden)
+    err, count := service.UpdateAdminMenuHidden(id, hidden)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }

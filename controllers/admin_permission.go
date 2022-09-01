@@ -2,9 +2,10 @@ package controllers
 
 import (
     "encoding/json"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
 )
 
 type AdminPermissionController struct {
@@ -16,15 +17,19 @@ func (c *AdminPermissionController) CreateAdminPermission()  {
     adminPermission := &models.AdminPermission{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminPermission)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.CreateAdminPermission(adminPermission)
+    err, count := service.CreateAdminPermission(adminPermission)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -34,15 +39,19 @@ func (c *AdminPermissionController) UpdateAdminPermission()  {
     adminPermission := &models.AdminPermission{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminPermission)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.UpdateAdminPermission(id, adminPermission)
+    err2, count := service.UpdateAdminPermission(id, adminPermission)
+    if err2 != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -52,20 +61,31 @@ func (c *AdminPermissionController) DeleteAdminPermission()  {
     idsStr := c.Ctx.Input.Query("ids")
     ids := &[]int64{}
     json.Unmarshal([]byte(idsStr), ids)
-    count := service.DeleteAdminPermission(ids)
+    err, count := service.DeleteAdminPermission(ids)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 获取所有权限列表
 func (c *AdminPermissionController) AdminPermissionList()  {
-    c.JsonResult(models.SuccessResult(service.AdminPermissionList()))
+    err, data := service.AdminPermissionList()
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }
 
 // 树形结构返回所有权限列表
 func (c *AdminPermissionController) AdminPermissionTreeList()  {
-    c.JsonResult(models.SuccessResult(service.AdminPermissionTreeList()))
+    err, data := service.AdminPermissionTreeList()
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }

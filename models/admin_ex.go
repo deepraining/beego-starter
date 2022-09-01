@@ -16,21 +16,21 @@ type AdminUserDetails struct {
 }
 
 type AdminUserParam struct {
-    Username string `valid:"Required"`
-    Password string `valid:"Required"`
+    Username string
+    Password string
     Avatar string
-    Email string `valid:"Email"`
+    Email string
     Nickname string
     Note string
 }
 
 type AdminLoginParam struct {
-    Username string `valid:"Required"`
-    Password string `valid:"Required"`
+    Username string
+    Password string
 }
 
 type UpdateAdminUserPasswordParam struct {
-    Username string `valid:"Required"`
-    OldPassword string `valid:"Required"`
-    NewPassword string `valid:"Required"`
+    Username string
+    OldPassword string
+    NewPassword string
 }

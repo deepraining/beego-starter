@@ -9,7 +9,7 @@ import (
 
     "github.com/beego/beego/v2/core/logs"
 
-    _ "github.com/senntyou/beego-starter/routers"
+    _ "github.com/deepraining/beego-starter/routers"
 
     beego "github.com/beego/beego/v2/server/web"
     . "github.com/smartystreets/goconvey/convey"

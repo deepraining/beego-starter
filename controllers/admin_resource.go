@@ -2,9 +2,10 @@ package controllers
 
 import (
     "encoding/json"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
     "math"
 )
 
@@ -17,15 +18,19 @@ func (c *AdminResourceController) CreateAdminResource()  {
     adminResource := &models.AdminResource{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResource)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.CreateAdminResource(adminResource)
+    err, count := service.CreateAdminResource(adminResource)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -35,27 +40,44 @@ func (c *AdminResourceController) UpdateAdminResource()  {
     adminResource := &models.AdminResource{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResource)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.UpdateAdminResource(id, adminResource)
+    err, count := service.UpdateAdminResource(id, adminResource)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
+    }
+}
+
+// 根据ID删除后台资源
+func (c *AdminResourceController) DeleteAdminResource()  {
+    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    err, count := service.DeleteAdminResource(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    if count > 0 {
+        c.ApiSucceed(count)
+    } else {
+        c.ApiFail("")
     }
 }
 
 // 根据ID获取资源详情
-func (c *AdminResourceController) DeleteAdminResource()  {
+func (c *AdminResourceController) GetAdminResourceItem()  {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    count := service.DeleteAdminResource(id)
-    if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
-    } else {
-        c.JsonResult(models.FailedResult())
+    err, data := service.GetAdminResource(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
     }
+    c.ApiSucceed(data)
 }
 
 // 分页模糊查询后台资源
@@ -66,8 +88,11 @@ func (c *AdminResourceController) AdminResourceList()  {
     nameKeyword := c.Ctx.Input.Query("nameKeyword")
     urlKeyword := c.Ctx.Input.Query("urlKeyword")
 
-    list, total := service.AdminResourceList(categoryId, nameKeyword, urlKeyword, pageSize, pageNum)
-    c.JsonResult(&map[string]interface{}{
+    err, list, total := service.AdminResourceList(categoryId, nameKeyword, urlKeyword, pageSize, pageNum)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(&map[string]interface{}{
         "pageNum": pageNum,
         "pageSize": pageSize,
         "pages": math.Ceil(float64(total)/float64(pageSize)),
@@ -78,5 +103,9 @@ func (c *AdminResourceController) AdminResourceList()  {
 
 // 查询所有后台资源
 func (c *AdminResourceController) AdminResourceListAll()  {
-    c.JsonResult(models.SuccessResult(service.AdminResourceListAll()))
+    err, data := service.AdminResourceListAll()
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }

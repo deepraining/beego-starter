@@ -4,9 +4,9 @@ import (
     "encoding/json"
     "github.com/beego/beego/v2/core/logs"
     "github.com/beego/beego/v2/server/web"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
     "io"
     "strings"
 )
@@ -45,6 +45,11 @@ func (c *BaseController) ApiFail(message string) {
     c.JsonResult(models.FailedResultWithMessage(message))
 }
 
+// 响应成功
+func (c *BaseController) ApiSucceed(data interface{}) {
+    c.JsonResult(models.SuccessResult(data))
+}
+
 // 预校验
 func (c *BaseController) Prepare() {
     requestPath := c.Ctx.Request.URL.Path
@@ -54,7 +59,10 @@ func (c *BaseController) Prepare() {
     }
     // 校验登录状态
     jwtToken := c.Ctx.Request.Header.Get(utils.TokenHeaderKey)
-    username := utils.GetUserNameFromToken(jwtToken)
+    err, username := utils.GetUserNameFromToken(jwtToken)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     c.Username = username
     // 是否是安全的URL链接
     isSecureUrl := utils.MatchUrl(secureIgnoreUrls, requestPath)
@@ -66,7 +74,10 @@ func (c *BaseController) Prepare() {
             c.JsonResult(models.UnauthorizedResult(nil))
         }
         // 校验权限
-        adminUserDetails := service.LoadAdminUserByUsername(username)
+        err2, adminUserDetails := service.LoadAdminUserByUsername(username)
+        if err2 != nil {
+            c.ApiFail(utils.NormalizeErrorMessage(err))
+        }
         if adminUserDetails == nil || adminUserDetails.ResourceList == nil {
             // 响应未授权信息
             c.JsonResult(models.UnauthorizedResult(nil))

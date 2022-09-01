@@ -2,9 +2,10 @@ package controllers
 
 import (
     "encoding/json"
-    "github.com/senntyou/beego-starter/models"
-    "github.com/senntyou/beego-starter/service"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/beego/beego/v2/core/logs"
+    "github.com/deepraining/beego-starter/models"
+    "github.com/deepraining/beego-starter/service"
+    "github.com/deepraining/beego-starter/utils"
 )
 
 type AdminResourceCategoryController struct {
@@ -16,15 +17,19 @@ func (c *AdminResourceCategoryController) CreateAdminResourceCategory()  {
     adminResourceCategory := &models.AdminResourceCategory{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResourceCategory)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.CreateAdminResourceCategory(adminResourceCategory)
+    err, count := service.CreateAdminResourceCategory(adminResourceCategory)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
@@ -34,30 +39,41 @@ func (c *AdminResourceCategoryController) UpdateAdminResourceCategory()  {
     adminResourceCategory := &models.AdminResourceCategory{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResourceCategory)
     if err != nil {
+        logs.Error(err)
         c.ApiFail("数据解析失败")
     }
 
-    count := service.UpdateAdminResourceCategory(id, adminResourceCategory)
+    err, count := service.UpdateAdminResourceCategory(id, adminResourceCategory)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
 
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 根据ID删除后台资源
 func (c *AdminResourceCategoryController) DeleteAdminResourceCategory()  {
     id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    count := service.DeleteAdminResourceCategory(id)
+    err, count := service.DeleteAdminResourceCategory(id)
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
     if count > 0 {
-        c.JsonResult(models.SuccessResult(count))
+        c.ApiSucceed(count)
     } else {
-        c.JsonResult(models.FailedResult())
+        c.ApiFail("")
     }
 }
 
 // 查询所有后台资源分类
 func (c *AdminResourceCategoryController) AdminResourceCategoryListAll()  {
-    c.JsonResult(models.SuccessResult(service.AdminResourceCategoryListAll()))
+    err, data := service.AdminResourceCategoryListAll()
+    if err != nil {
+        c.ApiFail(utils.NormalizeErrorMessage(err))
+    }
+    c.ApiSucceed(data)
 }

@@ -4,13 +4,15 @@ import (
     "encoding/json"
     "fmt"
     beegoCache "github.com/beego/beego/v2/client/cache"
+    _ "github.com/beego/beego/v2/client/cache/redis"
     "github.com/beego/beego/v2/core/logs"
     "github.com/beego/beego/v2/server/web"
-    "github.com/senntyou/beego-starter/cache"
-    _ "github.com/senntyou/beego-starter/routers"
-    "github.com/senntyou/beego-starter/utils"
+    "github.com/deepraining/beego-starter/cache"
+    _ "github.com/deepraining/beego-starter/routers"
+    "github.com/deepraining/beego-starter/utils"
     "gorm.io/driver/mysql"
     "gorm.io/gorm"
+    "gorm.io/gorm/schema"
     "os"
     "path/filepath"
 )
@@ -30,7 +32,11 @@ func initDB() {
     password, _ := web.AppConfig.String("mysqlpass")
 
     dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local", username, password, host, database)
-    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+    db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+        NamingStrategy: schema.NamingStrategy{
+            SingularTable: true,
+        },
+    })
 
     if err != nil {
         logs.Error("初始化数据库失败:", err)
