@@ -35,7 +35,10 @@ func (c *AdminResourceCategoryController) CreateAdminResourceCategory()  {
 
 // 修改后台资源分类
 func (c *AdminResourceCategoryController) UpdateAdminResourceCategory()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminResourceCategory := &models.AdminResourceCategory{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResourceCategory)
     if err != nil {
@@ -57,7 +60,10 @@ func (c *AdminResourceCategoryController) UpdateAdminResourceCategory()  {
 
 // 根据ID删除后台资源
 func (c *AdminResourceCategoryController) DeleteAdminResourceCategory()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, count := service.DeleteAdminResourceCategory(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))

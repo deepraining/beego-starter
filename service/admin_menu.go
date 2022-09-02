@@ -2,9 +2,9 @@ package service
 
 import (
     "github.com/beego/beego/v2/core/logs"
-    "github.com/jinzhu/copier"
     "github.com/deepraining/beego-starter/models"
     "github.com/deepraining/beego-starter/utils"
+    "github.com/jinzhu/copier"
 )
 
 // 修改菜单层级
@@ -15,7 +15,7 @@ func updateAdminMenuLevel(adminMenu *models.AdminMenu) error {
     } else {
         parentAdminMenu := &models.AdminMenu{}
         // 有父菜单时选择根据父菜单level设置
-        result := utils.GetDB().First(parentAdminMenu, adminMenu.ParentId)
+        result := utils.GetDB().Find(parentAdminMenu, adminMenu.ParentId)
         if result.Error != nil {
             logs.Error(result.Error)
             return result.Error
@@ -77,7 +77,7 @@ func UpdateAdminMenuHidden(id int64, hidden int64) (error, int64) {
 // 获取菜单
 func GetAdminMenu(id int64) (error, *models.AdminMenu) {
     adminMenu := &models.AdminMenu{}
-    result := utils.GetDB().First(adminMenu, id)
+    result := utils.GetDB().Find(adminMenu, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, nil
@@ -90,8 +90,7 @@ func GetAdminMenu(id int64) (error, *models.AdminMenu) {
 
 // 删除菜单
 func DeleteAdminMenu(id int64) (error, int64) {
-    adminMenu := &models.AdminMenu{}
-    result := utils.GetDB().Delete(adminMenu, id)
+    result := utils.GetDB().Delete(&models.AdminMenu{}, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -105,7 +104,7 @@ func AdminMenuList(parentId int64, pageSize int64, pageNum int64) (error, *[]mod
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
-    query := utils.GetDB().Where("parentId = ?", parentId)
+    query := utils.GetDB().Model(&models.AdminMenu{}).Where("parent_id = ?", parentId)
     list := &[]models.AdminMenu{}
     var total int64 = 0
     query.Count(&total)
@@ -143,7 +142,7 @@ func convertAdminMenuNode(adminMenu *models.AdminMenu, list *[]models.AdminMenu)
     children := []models.AdminMenuNode{}
     for _, item := range *list{
         // 根菜单
-        if item.ParentId == adminMenuNode.ParentId {
+        if item.ParentId == adminMenuNode.Id {
             children = append(children, *convertAdminMenuNode(&item, list))
         }
     }

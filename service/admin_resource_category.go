@@ -40,8 +40,7 @@ func UpdateAdminResourceCategory(id int64, adminResourceCategory *models.AdminRe
 
 // 删除资源分类
 func DeleteAdminResourceCategory(id int64) (error, int64) {
-    adminResourceCategory := &models.AdminResourceCategory{}
-    result := utils.GetDB().Delete(adminResourceCategory, id)
+    result := utils.GetDB().Delete(&models.AdminResourceCategory{}, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0

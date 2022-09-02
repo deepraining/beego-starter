@@ -2,17 +2,17 @@ package models
 
 type AdminMenuNode struct {
     AdminMenu
-    Children *[]AdminMenuNode
+    Children *[]AdminMenuNode `json:"children"`
 }
 
 type AdminPermissionNode struct {
     AdminPermission
-    Children *[]AdminPermissionNode
+    Children *[]AdminPermissionNode `json:"children"`
 }
 
 type AdminUserDetails struct {
     AdminUser
-    ResourceList *[]AdminResource
+    ResourceList *[]AdminResource `json:"resourceList"`
 }
 
 type AdminUserParam struct {

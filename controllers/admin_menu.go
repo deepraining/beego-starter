@@ -22,8 +22,8 @@ func (c *AdminMenuController) CreateAdminMenu()  {
         c.ApiFail("数据解析失败")
     }
 
-    err2, count := service.CreateAdminMenu(adminMenu)
-    if err2 != nil {
+    err, count := service.CreateAdminMenu(adminMenu)
+    if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
 
@@ -36,7 +36,10 @@ func (c *AdminMenuController) CreateAdminMenu()  {
 
 // 修改后台菜单
 func (c *AdminMenuController) UpdateAdminMenu()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminMenu := &models.AdminMenu{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminMenu)
     if err != nil {
@@ -44,8 +47,8 @@ func (c *AdminMenuController) UpdateAdminMenu()  {
         c.ApiFail("数据解析失败")
     }
 
-    err2, count := service.UpdateAdminMenu(id, adminMenu)
-    if err2 != nil {
+    err, count := service.UpdateAdminMenu(id, adminMenu)
+    if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
 
@@ -58,7 +61,10 @@ func (c *AdminMenuController) UpdateAdminMenu()  {
 
 // 根据ID获取菜单详情
 func (c *AdminMenuController) GetAdminMenuItem()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.GetAdminMenu(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -68,7 +74,10 @@ func (c *AdminMenuController) GetAdminMenuItem()  {
 
 // 根据ID删除后台菜单
 func (c *AdminMenuController) DeleteAdminMenu()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, count := service.DeleteAdminMenu(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -83,7 +92,7 @@ func (c *AdminMenuController) DeleteAdminMenu()  {
 
 // 分页查询后台菜单
 func (c *AdminMenuController) AdminMenuList()  {
-    parentId := utils.StringToInt64(c.Ctx.Input.Params()["parentId"], 0)
+    parentId := utils.StringToInt64(c.Ctx.Input.Param(":parentId"), 0)
     pageNum := utils.StringToInt64(c.Ctx.Input.Query("pageNum"), 1)
     pageSize := utils.StringToInt64(c.Ctx.Input.Query("pageSize"), 5)
 
@@ -111,7 +120,10 @@ func (c *AdminMenuController) AdminMenuTreeList()  {
 
 // 修改菜单显示状态
 func (c *AdminMenuController) AdminMenuUpdateHidden()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     hidden := utils.StringToInt64(c.Ctx.Input.Query("hidden"), 0)
 
     err, count := service.UpdateAdminMenuHidden(id, hidden)

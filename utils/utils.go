@@ -33,6 +33,12 @@ func MatchUrl(urls []string, path string) bool {
                 return true
             }
 
+        } else if strings.HasSuffix(url, "/**") {
+            // /** 匹配子孙目录
+            if strings.HasPrefix(path, url[0:len(url)-3]) {
+                return true
+            }
+
         } else if strings.HasSuffix(url, "/*") {
             // /* 匹配子目录
             if len(strings.Split(url, "/")) == len(strings.Split(path, "/")) && strings.HasPrefix(path, url[0:len(url)-2]) {

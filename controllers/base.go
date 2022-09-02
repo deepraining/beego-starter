@@ -74,8 +74,8 @@ func (c *BaseController) Prepare() {
             c.JsonResult(models.UnauthorizedResult(nil))
         }
         // 校验权限
-        err2, adminUserDetails := service.LoadAdminUserByUsername(username)
-        if err2 != nil {
+        err, adminUserDetails := service.LoadAdminUserByUsername(username)
+        if err != nil {
             c.ApiFail(utils.NormalizeErrorMessage(err))
         }
         if adminUserDetails == nil || adminUserDetails.ResourceList == nil {
@@ -87,6 +87,7 @@ func (c *BaseController) Prepare() {
         for _, item := range *adminUserDetails.ResourceList{
             resourceUrls = append(resourceUrls, item.Url)
         }
+
         // 已匹配上权限URL
         matched := utils.MatchUrl(resourceUrls, requestPath)
         if !matched {

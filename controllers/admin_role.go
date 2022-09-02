@@ -7,6 +7,8 @@ import (
     "github.com/deepraining/beego-starter/service"
     "github.com/deepraining/beego-starter/utils"
     "math"
+    "strconv"
+    "strings"
 )
 
 type AdminRoleController struct {
@@ -36,7 +38,10 @@ func (c *AdminRoleController) CreateAdminRole()  {
 
 // 修改角色
 func (c *AdminRoleController) UpdateAdminRole()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminRole := &models.AdminRole{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminRole)
     if err != nil {
@@ -58,11 +63,18 @@ func (c *AdminRoleController) UpdateAdminRole()  {
 
 // 根据id批量删除角色
 func (c *AdminRoleController) DeleteAdminRole()  {
-    // [1,2,3,4]
+    // 1,2,3,4
     idsStr := c.Ctx.Input.Query("ids")
-    ids := &[]int64{}
-    json.Unmarshal([]byte(idsStr), ids)
-    err, count := service.DeleteAdminRole(ids)
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.DeleteAdminRole(&ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -103,7 +115,10 @@ func (c *AdminRoleController) AdminRoleList()  {
 
 // 获取相应角色权限
 func (c *AdminRoleController) AdminRolePermissionList() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
+    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.AdminRolePermissionList(roleId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -113,12 +128,22 @@ func (c *AdminRoleController) AdminRolePermissionList() {
 
 // 修改角色权限
 func (c *AdminRoleController) UpdateAdminRolePermission() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
-    // [1,2,3,4]
+    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
+    // 1,2,3,4
     idsStr := c.Ctx.Input.Query("permissionIds")
-    ids := &[]int64{}
-    json.Unmarshal([]byte(idsStr), ids)
-    err, count := service.UpdateAdminRolePermission(roleId, ids)
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.UpdateAdminRolePermission(roleId, &ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -131,7 +156,10 @@ func (c *AdminRoleController) UpdateAdminRolePermission() {
 
 // 修改角色状态
 func (c *AdminRoleController) UpdateAdminRoleStatus() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
+    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
     status := utils.StringToInt64(c.Ctx.Input.Query("status"), 0)
     adminRole := &models.AdminRole{Status: int32(status)}
     err, count := service.UpdateAdminRole(roleId, adminRole)
@@ -147,7 +175,10 @@ func (c *AdminRoleController) UpdateAdminRoleStatus() {
 
 // 获取角色相关菜单
 func (c *AdminRoleController) AdminRoleMenuList() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
+    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.AdminMenuListByRoleId(roleId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -157,7 +188,10 @@ func (c *AdminRoleController) AdminRoleMenuList() {
 
 // 获取角色相关资源
 func (c *AdminRoleController) AdminRoleResourceList() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
+    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.AdminResourceListByRoleId(roleId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -167,12 +201,22 @@ func (c *AdminRoleController) AdminRoleResourceList() {
 
 // 给角色分配菜单
 func (c *AdminRoleController) AllocAdminRoleMenu() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
-    // [1,2,3,4]
+    roleId := utils.StringToInt64(c.Ctx.Input.Query("roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
+    // 1,2,3,4
     idsStr := c.Ctx.Input.Query("menuIds")
-    ids := &[]int64{}
-    json.Unmarshal([]byte(idsStr), ids)
-    err, count := service.AllocAdminRoleMenu(roleId, ids)
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.AllocAdminRoleMenu(roleId, &ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -185,12 +229,22 @@ func (c *AdminRoleController) AllocAdminRoleMenu() {
 
 // 给角色分配资源
 func (c *AdminRoleController) AllocAdminRoleResource() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Params()["roleId"], 0)
-    // [1,2,3,4]
+    roleId := utils.StringToInt64(c.Ctx.Input.Query("roleId"), 0)
+    if roleId == 0 {
+        c.ApiFail("参数错误")
+    }
+    // 1,2,3,4
     idsStr := c.Ctx.Input.Query("resourceIds")
-    ids := &[]int64{}
-    json.Unmarshal([]byte(idsStr), ids)
-    err, count := service.AllocAdminRoleResource(roleId, ids)
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.AllocAdminRoleResource(roleId, &ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }

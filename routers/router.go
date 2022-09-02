@@ -56,9 +56,9 @@ func init() {
     web.Router("/adminRole/permission/:roleId", &controllers.AdminRoleController{}, "get:AdminRolePermissionList")
     web.Router("/adminRole/list", &controllers.AdminRoleController{}, "get:AdminRoleList")
     web.Router("/adminRole/listAll", &controllers.AdminRoleController{}, "get:AdminRoleListAll")
-    web.Router("/adminRole/updateStatus/:id", &controllers.AdminRoleController{}, "post:UpdateAdminRoleStatus")
-    web.Router("/adminRole/listMenu/:id", &controllers.AdminRoleController{}, "get:AdminRoleMenuList")
-    web.Router("/adminRole/listResource/:id", &controllers.AdminRoleController{}, "get:AdminRoleResourceList")
+    web.Router("/adminRole/updateStatus/:roleId", &controllers.AdminRoleController{}, "post:UpdateAdminRoleStatus")
+    web.Router("/adminRole/listMenu/:roleId", &controllers.AdminRoleController{}, "get:AdminRoleMenuList")
+    web.Router("/adminRole/listResource/:roleId", &controllers.AdminRoleController{}, "get:AdminRoleResourceList")
     web.Router("/adminRole/allocMenu", &controllers.AdminRoleController{}, "post:AllocAdminRoleMenu")
     web.Router("/adminRole/allocResource", &controllers.AdminRoleController{}, "post:AllocAdminRoleResource")
 }

@@ -6,6 +6,8 @@ import (
     "github.com/deepraining/beego-starter/models"
     "github.com/deepraining/beego-starter/service"
     "github.com/deepraining/beego-starter/utils"
+    "strconv"
+    "strings"
 )
 
 type AdminPermissionController struct {
@@ -35,7 +37,10 @@ func (c *AdminPermissionController) CreateAdminPermission()  {
 
 // 修改权限
 func (c *AdminPermissionController) UpdateAdminPermission()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminPermission := &models.AdminPermission{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminPermission)
     if err != nil {
@@ -43,8 +48,8 @@ func (c *AdminPermissionController) UpdateAdminPermission()  {
         c.ApiFail("数据解析失败")
     }
 
-    err2, count := service.UpdateAdminPermission(id, adminPermission)
-    if err2 != nil {
+    err, count := service.UpdateAdminPermission(id, adminPermission)
+    if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
 
@@ -57,11 +62,18 @@ func (c *AdminPermissionController) UpdateAdminPermission()  {
 
 // 根据id批量删除权限
 func (c *AdminPermissionController) DeleteAdminPermission()  {
-    // [1,2,3,4]
+    // 1,2,3,4
     idsStr := c.Ctx.Input.Query("ids")
-    ids := &[]int64{}
-    json.Unmarshal([]byte(idsStr), ids)
-    err, count := service.DeleteAdminPermission(ids)
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.DeleteAdminPermission(&ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }

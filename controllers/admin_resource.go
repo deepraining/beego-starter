@@ -36,7 +36,10 @@ func (c *AdminResourceController) CreateAdminResource()  {
 
 // 修改后台资源
 func (c *AdminResourceController) UpdateAdminResource()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminResource := &models.AdminResource{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminResource)
     if err != nil {
@@ -58,7 +61,10 @@ func (c *AdminResourceController) UpdateAdminResource()  {
 
 // 根据ID删除后台资源
 func (c *AdminResourceController) DeleteAdminResource()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, count := service.DeleteAdminResource(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -72,7 +78,10 @@ func (c *AdminResourceController) DeleteAdminResource()  {
 
 // 根据ID获取资源详情
 func (c *AdminResourceController) GetAdminResourceItem()  {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.GetAdminResource(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))

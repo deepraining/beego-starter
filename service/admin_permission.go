@@ -2,9 +2,9 @@ package service
 
 import (
     "github.com/beego/beego/v2/core/logs"
-    "github.com/jinzhu/copier"
     "github.com/deepraining/beego-starter/models"
     "github.com/deepraining/beego-starter/utils"
+    "github.com/jinzhu/copier"
 )
 
 // 创建权限
@@ -32,8 +32,7 @@ func UpdateAdminPermission(id int64, adminPermission *models.AdminPermission) (e
 
 // 删除权限
 func DeleteAdminPermission(ids *[]int64) (error, int64) {
-    adminPermission := &models.AdminPermission{}
-    result := utils.GetDB().Delete(adminPermission, ids)
+    result := utils.GetDB().Delete(&models.AdminPermission{}, ids)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -79,7 +78,7 @@ func convertAdminPermissionNode(adminPermission *models.AdminPermission, list *[
     children := []models.AdminPermissionNode{}
     for _, item := range *list{
         // 根权限
-        if item.ParentId == adminPermissionNode.ParentId {
+        if item.ParentId == adminPermissionNode.Id {
             children = append(children, *convertAdminPermissionNode(&item, list))
         }
     }

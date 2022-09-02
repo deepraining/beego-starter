@@ -31,8 +31,7 @@ func UpdateAdminRole(id int64, adminRole *models.AdminRole) (error, int64) {
 
 // 删除角色
 func DeleteAdminRole(ids *[]int64) (error, int64) {
-    adminRole := &models.AdminRole{}
-    result := utils.GetDB().Delete(adminRole, ids)
+    result := utils.GetDB().Delete(&models.AdminRole{}, ids)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -64,10 +63,10 @@ WHERE
 // 更新角色的权限
 func UpdateAdminRolePermission(roleId int64, permissionIds *[]int64) (error, int64) {
     // 先删除原有关系
-    result0 := utils.GetDB().Where("roleId = ?", roleId).Delete(&models.AdminRolePermissionRelation{})
-    if result0.Error != nil {
-        logs.Error(result0.Error)
-        return result0.Error, 0
+    result := utils.GetDB().Where("role_id = ?", roleId).Delete(&models.AdminRolePermissionRelation{})
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
     }
 
     // 批量插入新关系
@@ -78,7 +77,7 @@ func UpdateAdminRolePermission(roleId int64, permissionIds *[]int64) (error, int
             PermissionId: item,
         })
     }
-    result := utils.GetDB().Create(relationList)
+    result = utils.GetDB().Create(relationList)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -102,7 +101,7 @@ func AdminRoleList(keyword string, pageSize int64, pageNum int64) (error, *[]mod
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
-    query := utils.GetDB()
+    query := utils.GetDB().Model(&models.AdminRole{})
     if keyword != "" {
         query.Where("name like ?", "%"+ keyword +"%")
     }
@@ -164,7 +163,7 @@ GROUP BY
 // 分配角色的菜单
 func AllocAdminRoleMenu(roleId int64, menuIds *[]int64) (error, int64) {
     // 先删除原有关系
-    utils.GetDB().Where("roleId = ?", roleId).Delete(&models.AdminRoleMenuRelation{})
+    utils.GetDB().Where("role_id = ?", roleId).Delete(&models.AdminRoleMenuRelation{})
 
     // 批量插入新关系
     relationList := []models.AdminRoleMenuRelation{}
@@ -185,7 +184,7 @@ func AllocAdminRoleMenu(roleId int64, menuIds *[]int64) (error, int64) {
 // 分配角色的资源
 func AllocAdminRoleResource(roleId int64, resourceIds *[]int64) (error, int64) {
     // 先删除原有关系
-    utils.GetDB().Where("roleId = ?", roleId).Delete(&models.AdminRoleResourceRelation{})
+    utils.GetDB().Where("role_id = ?", roleId).Delete(&models.AdminRoleResourceRelation{})
 
     // 批量插入新关系
     relationList := []models.AdminRoleResourceRelation{}

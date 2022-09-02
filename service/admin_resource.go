@@ -31,7 +31,7 @@ func UpdateAdminResource(id int64, adminResource *models.AdminResource) (error, 
 // 获取资源
 func GetAdminResource(id int64) (error, *models.AdminResource) {
     adminResource := &models.AdminResource{}
-    result := utils.GetDB().First(adminResource, id)
+    result := utils.GetDB().Find(adminResource, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, nil
@@ -44,8 +44,7 @@ func GetAdminResource(id int64) (error, *models.AdminResource) {
 
 // 删除资源
 func DeleteAdminResource(id int64) (error, int64) {
-    adminResource := &models.AdminResource{}
-    result := utils.GetDB().Delete(adminResource, id)
+    result := utils.GetDB().Delete(&models.AdminResource{}, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -59,9 +58,9 @@ func AdminResourceList(categoryId int64, nameKeyword string, urlKeyword string, 
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
-    query := utils.GetDB()
+    query := utils.GetDB().Model(&models.AdminResource{})
     if categoryId != 0 {
-        query.Where("categoryId = ?", categoryId)
+        query.Where("category_id = ?", categoryId)
     }
     if nameKeyword != "" {
         query.Where("name like ?", "%"+nameKeyword+"%")

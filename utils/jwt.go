@@ -39,6 +39,9 @@ func GenerateToken(username string) (error, string) {
 
 // 从token中获取登录用户名
 func GetUserNameFromToken(tokenStr string) (error, string)  {
+    if strings.HasPrefix(tokenStr, TokenHead) {
+        tokenStr = tokenStr[len(TokenHead):]
+    }
     tokenStr = strings.Trim(tokenStr, " ")
     if tokenStr == "" {
         return nil, ""

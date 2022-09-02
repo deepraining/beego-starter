@@ -3,9 +3,9 @@ package service
 import (
     "errors"
     "github.com/beego/beego/v2/core/logs"
-    "github.com/jinzhu/copier"
     "github.com/deepraining/beego-starter/models"
     "github.com/deepraining/beego-starter/utils"
+    "github.com/jinzhu/copier"
     "time"
 )
 
@@ -16,7 +16,7 @@ func GetAdminUserByUsername(username string) (error, *models.AdminUser) {
         return nil, adminUser
     }
     adminUser = &models.AdminUser{}
-    result := utils.GetDB().First(adminUser, "username = ?", username)
+    result := utils.GetDB().Find(adminUser, "username = ?", username)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, nil
@@ -55,10 +55,10 @@ func AdminRegister(param *models.AdminUserParam) (error, *models.AdminUser) {
     // 将密码进行加密操作
     encryptedPassword := utils.EncryptPassword(adminUser.Password)
     adminUser.Password = encryptedPassword
-    result2 := utils.GetDB().Create(adminUser)
-    if result2.Error != nil {
-        logs.Error(result2.Error)
-        return result2.Error, nil
+    result = utils.GetDB().Create(adminUser)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, nil
     }
     return nil, adminUser
 }
@@ -73,10 +73,10 @@ func AdminLogin(username string, password string) (error, string) {
     if !utils.ComparePassword(password, adminUserDetails.Password) {
         return errors.New(utils.CustomMsgPrefix+"密码不正确"), ""
     }
-    err2, token := utils.GenerateToken(username)
-    if err2 != nil {
-        logs.Error(err2)
-        return err2, ""
+    err, token := utils.GenerateToken(username)
+    if err != nil {
+        logs.Error(err)
+        return err, ""
     }
     insertAdminLoginLog(username)
 
@@ -127,7 +127,6 @@ func AdminResourceListByUserId(userId int64) (error, *[]models.AdminResource) {
     if list != nil {
         return nil, list
     }
-
     list = &[]models.AdminResource{}
     result := utils.GetDB().Raw(`
 SELECT
@@ -143,11 +142,11 @@ AND ur.id IS NOT NULL
 GROUP BY
   ur.id
 `, userId).Scan(list)
+
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, nil
     }
-
     if len(*list) != 0 {
         SetAdminResourceListCache(userId, list)
     }
@@ -209,7 +208,7 @@ func AdminRefreshToken(oldToken string) (error, string) {
 // 获取用户项
 func GetAdminUserItem(id int64) (error, *models.AdminUser) {
     adminUser := &models.AdminUser{}
-    result := utils.GetDB().First(adminUser, id)
+    result := utils.GetDB().Find(adminUser, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, nil
@@ -225,7 +224,7 @@ func AdminUserList(keyword string, pageSize int64, pageNum int64) (error, *[]mod
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
-    query := utils.GetDB()
+    query := utils.GetDB().Model(&models.AdminUser{})
     if keyword != "" {
         query.Where("username like ?", "%"+ keyword +"%").Or("nickname like ?", "%"+ keyword +"%")
     }
@@ -244,7 +243,7 @@ func AdminUserList(keyword string, pageSize int64, pageNum int64) (error, *[]mod
 func UpdateAdminUser(id int64, adminUser *models.AdminUser) (error, int64) {
     adminUser.Id = id
     rawUser := &models.AdminUser{}
-    result := utils.GetDB().First(rawUser, id)
+    result := utils.GetDB().Find(rawUser, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -258,19 +257,30 @@ func UpdateAdminUser(id int64, adminUser *models.AdminUser) (error, int64) {
 
     // 账户名不能更改
     adminUser.Username = ""
-    result2 := utils.GetDB().Updates(adminUser)
-    if result2.Error != nil {
-        logs.Error(result2.Error)
-        return result2.Error, 0
+    result = utils.GetDB().Updates(adminUser)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
     }
     DelAdminUserCache(id)
-    return nil, result2.RowsAffected
+    return nil, result.RowsAffected
+}
+
+// 通过map更新(struct不更新0值)
+func UpdateAdminUserByMap(id int64, adminUser *map[string]interface{}) (error, int64) {
+    result := utils.GetDB().Model(&models.AdminUser{}).Where("id = ?", id).Updates(adminUser)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    DelAdminUserCache(id)
+    return nil, result.RowsAffected
 }
 
 // 删除用户
 func DeleteAdminUser(id int64) (error, int64) {
     DelAdminUserCache(id)
-    result := utils.GetDB().Delete(&models.AdminUser{Id: id})
+    result := utils.GetDB().Delete(&models.AdminUser{}, id)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -282,7 +292,7 @@ func DeleteAdminUser(id int64) (error, int64) {
 // 更新用户的角色
 func UpdateAdminUserRole(userId int64, roleIds *[]int64) (error, int64) {
     // 先删除原来的关系
-    result := utils.GetDB().Delete(&models.AdminUserRoleRelation{UserId: userId})
+    result := utils.GetDB().Where("user_id = ?", userId).Delete(&models.AdminUserRoleRelation{})
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -296,12 +306,12 @@ func UpdateAdminUserRole(userId int64, roleIds *[]int64) (error, int64) {
                 RoleId: item,
             })
         }
-        result2 := utils.GetDB().Create(relationList)
-        if result2.Error != nil {
-            logs.Error(result2.Error)
-            return result2.Error, 0
+        result = utils.GetDB().Create(relationList)
+        if result.Error != nil {
+            logs.Error(result.Error)
+            return result.Error, 0
         }
-        return nil, result2.RowsAffected
+        return nil, result.RowsAffected
     }
     return nil, 0
 }
@@ -309,7 +319,7 @@ func UpdateAdminUserRole(userId int64, roleIds *[]int64) (error, int64) {
 // 更新用户权限
 func UpdateAdminUserPermission(userId int64, permissionIds *[]int64) (error, int64) {
     // 删除原所有权限关系
-    result := utils.GetDB().Delete(&models.AdminUserPermissionRelation{UserId: userId})
+    result := utils.GetDB().Where("user_id = ?", userId).Delete(&models.AdminUserPermissionRelation{})
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -321,16 +331,16 @@ func UpdateAdminUserPermission(userId int64, permissionIds *[]int64) (error, int
 
     // 获取用户所有角色权限
     rolePermissions := &[]models.AdminPermission{}
-    result2 := utils.GetDB().Raw(`
+    result = utils.GetDB().Raw(`
 select p.*
 from admin_user_role_relation ar left join admin_role r on ar.role_id = r.id
   left join admin_role_permission_relation rp on r.id = rp.role_id
   left join admin_permission p on rp.permission_id=p.id
   where ar.user_id = ? and p.id is not null
 `, userId).Scan(rolePermissions)
-    if result2.Error != nil {
-        logs.Error(result2.Error)
-        return result2.Error, 0
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
     }
 
     rolePermissionIds := []int64{}
@@ -371,12 +381,12 @@ from admin_user_role_relation ar left join admin_role r on ar.role_id = r.id
     relationList := []models.AdminUserPermissionRelation{}
     relationList = append(relationList, *convertAdminPermissionRelation(userId, 1, &addPermissionIdList)...)
     relationList = append(relationList, *convertAdminPermissionRelation(userId, 1, &subPermissionIdList)...)
-    result3 := utils.GetDB().Create(relationList)
-    if result3.Error != nil {
-        logs.Error(result3.Error)
-        return result3.Error, 0
+    result = utils.GetDB().Create(relationList)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
     }
-    return nil, result3.RowsAffected
+    return nil, result.RowsAffected
 }
 
 func convertAdminPermissionRelation(userId int64, type_ int32, permissionIdList *[]int64) *[]models.AdminUserPermissionRelation {
@@ -439,7 +449,7 @@ func UpdateAdminPassword(param *models.UpdateAdminUserPasswordParam) (error, int
     }
 
     adminUser := &models.AdminUser{}
-    result := utils.GetDB().Where("username = ?", param.Username).First(adminUser)
+    result := utils.GetDB().Where("username = ?", param.Username).Find(adminUser)
     if result.Error != nil {
         logs.Error(result.Error)
         return result.Error, 0
@@ -457,10 +467,10 @@ func UpdateAdminPassword(param *models.UpdateAdminUserPasswordParam) (error, int
         Password: utils.EncryptPassword(param.NewPassword),
     }
 
-    result2 := utils.GetDB().Updates(updateUser)
-    if result2.Error != nil {
-        logs.Error(result2.Error)
-        return result2.Error, 0
+    result = utils.GetDB().Updates(updateUser)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
     }
     DelAdminUserCache(adminUser.Id)
     return nil, 1

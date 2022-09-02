@@ -7,6 +7,8 @@ import (
     "github.com/deepraining/beego-starter/service"
     "github.com/deepraining/beego-starter/utils"
     "math"
+    "strconv"
+    "strings"
 )
 
 type AdminController struct {
@@ -89,8 +91,8 @@ func (c *AdminController) AdminInfo() {
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
-    err2, menus := service.AdminMenuListByUserId(adminUser.Id)
-    if err2 != nil {
+    err, menus := service.AdminMenuListByUserId(adminUser.Id)
+    if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
     c.ApiSucceed(&map[string]interface{}{
@@ -127,7 +129,10 @@ func (c *AdminController) AdminUserList() {
 
 // 获取指定用户信息
 func (c *AdminController) AdminUserItem() {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.GetAdminUserItem(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -137,7 +142,10 @@ func (c *AdminController) AdminUserItem() {
 
 // 修改指定用户信息
 func (c *AdminController) AdminUserUpdate() {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     adminUser := &models.AdminUser{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, adminUser)
     if err != nil {
@@ -180,7 +188,10 @@ func (c *AdminController) AdminUserUpdatePassword() {
 
 // 删除指定用户信息
 func (c *AdminController) AdminUserDelete() {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
+    }
     err, count := service.DeleteAdminUser(id)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -194,12 +205,16 @@ func (c *AdminController) AdminUserDelete() {
 
 // 修改帐号状态
 func (c *AdminController) AdminUserUpdateStatus() {
-    id := utils.StringToInt64(c.Ctx.Input.Params()["id"], 0)
-    status := utils.StringToInt64(c.Ctx.Input.Query("status"), 0)
-    adminUser := &models.AdminUser{
-        Status: int32(status),
+    id := utils.StringToInt64(c.Ctx.Input.Param(":id"), 0)
+    if id == 0 {
+        c.ApiFail("参数错误")
     }
-    err, count := service.UpdateAdminUser(id, adminUser)
+    status := utils.StringToInt64(c.Ctx.Input.Query("status"), 0)
+
+    adminUser := &map[string]interface{}{
+        "Status": int32(status),
+    }
+    err, count := service.UpdateAdminUserByMap(id, adminUser)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -213,11 +228,18 @@ func (c *AdminController) AdminUserUpdateStatus() {
 // 给用户分配角色
 func (c *AdminController) AdminUserUpdateRole() {
     userId := utils.StringToInt64(c.Ctx.Input.Query("userId"), 0)
-    // [1,2,3,4]
-    roleIdsStr := c.Ctx.Input.Query("roleIds")
-    roleIds := &[]int64{}
-    json.Unmarshal([]byte(roleIdsStr), roleIds)
-    err, count := service.UpdateAdminUserRole(userId, roleIds)
+    // 1,2,3,4
+    idsStr := c.Ctx.Input.Query("roleIds")
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.UpdateAdminUserRole(userId, &ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -230,7 +252,10 @@ func (c *AdminController) AdminUserUpdateRole() {
 
 // 获取指定用户的角色
 func (c *AdminController) AdminUserRoleList() {
-    userId := utils.StringToInt64(c.Ctx.Input.Params()["userId"], 0)
+    userId := utils.StringToInt64(c.Ctx.Input.Param(":userId"), 0)
+    if userId == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.AdminRoleListByUserId(userId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -241,11 +266,21 @@ func (c *AdminController) AdminUserRoleList() {
 // 给用户分配+-权限
 func (c *AdminController) AdminUserUpdatePermission() {
     userId := utils.StringToInt64(c.Ctx.Input.Query("userId"), 0)
-    // [1,2,3,4]
-    permissionIdsStr := c.Ctx.Input.Query("permissionIds")
-    permissionIds := &[]int64{}
-    json.Unmarshal([]byte(permissionIdsStr), permissionIds)
-    err, count := service.UpdateAdminUserPermission(userId, permissionIds)
+    if userId == 0 {
+        c.ApiFail("参数错误")
+    }
+    // 1,2,3,4
+    idsStr := c.Ctx.Input.Query("permissionIds")
+    if idsStr == "" {
+        c.ApiFail("参数错误")
+    }
+    idStrList := strings.Split(idsStr, ",")
+    ids := []int64{}
+    for _, idStr := range idStrList{
+        id, _ := strconv.Atoi(idStr)
+        ids = append(ids, int64(id))
+    }
+    err, count := service.UpdateAdminUserPermission(userId, &ids)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -258,7 +293,10 @@ func (c *AdminController) AdminUserUpdatePermission() {
 
 // 获取用户所有权限（包括+-权限）
 func (c *AdminController) AdminUserPermissionList() {
-    userId := utils.StringToInt64(c.Ctx.Input.Params()["userId"], 0)
+    userId := utils.StringToInt64(c.Ctx.Input.Param(":userId"), 0)
+    if userId == 0 {
+        c.ApiFail("参数错误")
+    }
     err, data := service.GetAdminPermissionList(userId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
