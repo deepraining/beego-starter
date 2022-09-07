@@ -8,7 +8,6 @@ import (
 
 // 创建角色
 func CreateAdminRole(adminRole *models.AdminRole) (error, int64) {
-    adminRole.UserCount = 0
     adminRole.Sort = 0
     result := utils.GetDB().Create(adminRole)
     if result.Error != nil {
@@ -40,51 +39,6 @@ func DeleteAdminRole(ids *[]int64) (error, int64) {
     return nil, result.RowsAffected
 }
 
-
-// 角色的权限列表
-func AdminRolePermissionList(roleId int64) (error, *[]models.AdminPermission) {
-    list := &[]models.AdminPermission{}
-    result:=utils.GetDB().Raw(`
-SELECT
-  p.*
-FROM
-  admin_role_permission_relation r
-  LEFT JOIN admin_permission p ON r.permission_id = p.id
-WHERE
-  r.role_id = ?
-`, roleId).Scan(list)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, nil
-    }
-    return nil, list
-}
-
-// 更新角色的权限
-func UpdateAdminRolePermission(roleId int64, permissionIds *[]int64) (error, int64) {
-    // 先删除原有关系
-    result := utils.GetDB().Where("role_id = ?", roleId).Delete(&models.AdminRolePermissionRelation{})
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-
-    // 批量插入新关系
-    relationList := []models.AdminRolePermissionRelation{}
-    for _, item := range *permissionIds {
-        relationList = append(relationList, models.AdminRolePermissionRelation{
-            RoleId: roleId,
-            PermissionId: item,
-        })
-    }
-    result = utils.GetDB().Create(relationList)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-    return nil, result.RowsAffected
-}
-
 // 角色所有列表
 func AdminRoleListAll() (error, *[]models.AdminRole) {
     list := &[]models.AdminRole{}
@@ -97,13 +51,13 @@ func AdminRoleListAll() (error, *[]models.AdminRole) {
 }
 
 // 角色列表
-func AdminRoleList(keyword string, pageSize int64, pageNum int64) (error, *[]models.AdminRole, int64) {
+func AdminRoleList(searchKey string, pageSize int64, pageNum int64) (error, *[]models.AdminRole, int64) {
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
     query := utils.GetDB().Model(&models.AdminRole{})
-    if keyword != "" {
-        query.Where("name like ?", "%"+ keyword +"%")
+    if searchKey != "" {
+        query.Where("name like ?", "%"+ searchKey +"%")
     }
     list := &[]models.AdminRole{}
     var total int64 = 0

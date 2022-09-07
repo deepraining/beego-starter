@@ -57,13 +57,13 @@ func (c *AdminController) AdminLogin() {
     }
     c.ApiSucceed(&map[string]string{
         "token": token,
-        "tokenHead": utils.TokenHead,
+        "tokenHead": utils.JwtTokenHead,
     })
 }
 
 // 刷新token
 func (c *AdminController) AdminRefreshToken() {
-    token := c.Ctx.Request.Header.Get(utils.TokenHeaderKey)
+    token := c.Ctx.Request.Header.Get(utils.JwtTokenHeaderKey)
     if token == "" {
         c.ApiFail("请先登录")
     }
@@ -77,7 +77,7 @@ func (c *AdminController) AdminRefreshToken() {
 
     c.ApiSucceed(&map[string]string{
         "token": token,
-        "tokenHead": utils.TokenHead,
+        "tokenHead": utils.JwtTokenHead,
     })
 }
 
@@ -85,7 +85,7 @@ func (c *AdminController) AdminRefreshToken() {
 func (c *AdminController) AdminInfo() {
     username := c.Username
     if username == "" {
-        c.JsonResult(models.UnauthorizedResult(nil))
+        c.JsonResult(models.UnauthorizedResult())
     }
     err, adminUser := service.GetAdminUserByUsername(username)
     if err != nil {
@@ -96,10 +96,11 @@ func (c *AdminController) AdminInfo() {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
     c.ApiSucceed(&map[string]interface{}{
-        "username": username,
+        "username": adminUser.Username,
+        "nickname": adminUser.Nickname,
+        "avatar": adminUser.Avatar,
         "roles": &[]string{"NONE"},
         "menus": menus,
-        "avatar": adminUser.Avatar,
     })
 }
 
@@ -112,9 +113,9 @@ func (c *AdminController) AdminLogout() {
 func (c *AdminController) AdminUserList() {
     pageNum := utils.StringToInt64(c.Ctx.Input.Query("pageNum"), 1)
     pageSize := utils.StringToInt64(c.Ctx.Input.Query("pageSize"), 5)
-    keyword := c.Ctx.Input.Query("keyword")
+    searchKey := c.Ctx.Input.Query("searchKey")
 
-    err, list, total := service.AdminUserList(keyword, pageSize, pageNum)
+    err, list, total := service.AdminUserList(searchKey, pageSize, pageNum)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -162,7 +163,7 @@ func (c *AdminController) AdminUserUpdate() {
 
 // 修改指定用户密码
 func (c *AdminController) AdminUserUpdatePassword() {
-    param := &models.UpdateAdminUserPasswordParam{}
+    param := &models.AdminUpdatePasswordParam{}
     err := json.Unmarshal(c.Ctx.Input.RequestBody, param)
     if err != nil {
         logs.Error(err)
@@ -212,7 +213,7 @@ func (c *AdminController) AdminUserUpdateStatus() {
     status := utils.StringToInt64(c.Ctx.Input.Query("status"), 0)
 
     adminUser := &map[string]interface{}{
-        "Status": int32(status),
+        "Status": int64(status),
     }
     err, count := service.UpdateAdminUserByMap(id, adminUser)
     if err != nil {
@@ -257,47 +258,6 @@ func (c *AdminController) AdminUserRoleList() {
         c.ApiFail("参数错误")
     }
     err, data := service.AdminRoleListByUserId(userId)
-    if err != nil {
-        c.ApiFail(utils.NormalizeErrorMessage(err))
-    }
-    c.ApiSucceed(data)
-}
-
-// 给用户分配+-权限
-func (c *AdminController) AdminUserUpdatePermission() {
-    userId := utils.StringToInt64(c.Ctx.Input.Query("userId"), 0)
-    if userId == 0 {
-        c.ApiFail("参数错误")
-    }
-    // 1,2,3,4
-    idsStr := c.Ctx.Input.Query("permissionIds")
-    if idsStr == "" {
-        c.ApiFail("参数错误")
-    }
-    idStrList := strings.Split(idsStr, ",")
-    ids := []int64{}
-    for _, idStr := range idStrList{
-        id, _ := strconv.Atoi(idStr)
-        ids = append(ids, int64(id))
-    }
-    err, count := service.UpdateAdminUserPermission(userId, &ids)
-    if err != nil {
-        c.ApiFail(utils.NormalizeErrorMessage(err))
-    }
-    if count > 0 {
-        c.ApiSucceed(count)
-    } else {
-        c.ApiFail("")
-    }
-}
-
-// 获取用户所有权限（包括+-权限）
-func (c *AdminController) AdminUserPermissionList() {
-    userId := utils.StringToInt64(c.Ctx.Input.Param(":userId"), 0)
-    if userId == 0 {
-        c.ApiFail("参数错误")
-    }
-    err, data := service.GetAdminPermissionList(userId)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }

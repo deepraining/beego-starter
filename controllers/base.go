@@ -50,6 +50,10 @@ func (c *BaseController) ApiSucceed(data interface{}) {
     c.JsonResult(models.SuccessResult(data))
 }
 
+func (c *BaseController) ApiSucceedWithMessage(data interface{}, message string) {
+    c.JsonResult(models.SuccessResultWithMessage(data, message))
+}
+
 // 预校验
 func (c *BaseController) Prepare() {
     requestPath := c.Ctx.Request.URL.Path
@@ -58,7 +62,7 @@ func (c *BaseController) Prepare() {
         requestPath = requestPath[0:len(requestPath)-1]
     }
     // 校验登录状态
-    jwtToken := c.Ctx.Request.Header.Get(utils.TokenHeaderKey)
+    jwtToken := c.Ctx.Request.Header.Get(utils.JwtTokenHeaderKey)
     err, username := utils.GetUserNameFromToken(jwtToken)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
@@ -71,7 +75,7 @@ func (c *BaseController) Prepare() {
         // 未登录，校验安全链接
         if username == "" {
             // 响应未授权信息
-            c.JsonResult(models.UnauthorizedResult(nil))
+            c.JsonResult(models.UnauthorizedResult())
         }
         // 校验权限
         err, adminUserDetails := service.LoadAdminUserByUsername(username)
@@ -80,7 +84,7 @@ func (c *BaseController) Prepare() {
         }
         if adminUserDetails == nil || adminUserDetails.ResourceList == nil {
             // 响应未授权信息
-            c.JsonResult(models.UnauthorizedResult(nil))
+            c.JsonResult(models.UnauthorizedResult())
         }
 
         resourceUrls := []string{}
@@ -92,7 +96,7 @@ func (c *BaseController) Prepare() {
         matched := utils.MatchUrl(resourceUrls, requestPath)
         if !matched {
             // 响应无权限信息
-            c.JsonResult(models.ForbiddenResult(nil))
+            c.JsonResult(models.ForbiddenResult())
         }
     }
 }

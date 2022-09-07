@@ -19,8 +19,6 @@ func init() {
     web.Router("/admin/updateStatus/:id", &controllers.AdminController{}, "post:AdminUserUpdateStatus")
     web.Router("/admin/role/update", &controllers.AdminController{}, "post:AdminUserUpdateRole")
     web.Router("/admin/role/:userId", &controllers.AdminController{}, "get:AdminUserRoleList")
-    web.Router("/admin/permission/update", &controllers.AdminController{}, "post:AdminUserUpdatePermission")
-    web.Router("/admin/permission/:userId", &controllers.AdminController{}, "get:AdminUserPermissionList")
     web.Router("/admin/:id", &controllers.AdminController{}, "get:AdminUserItem")
 
     web.Router("/adminMenu/create", &controllers.AdminMenuController{}, "post:CreateAdminMenu")
@@ -30,12 +28,6 @@ func init() {
     web.Router("/adminMenu/treeList", &controllers.AdminMenuController{}, "get:AdminMenuTreeList")
     web.Router("/adminMenu/updateHidden/:id", &controllers.AdminMenuController{}, "post:AdminMenuUpdateHidden")
     web.Router("/adminMenu/:id", &controllers.AdminMenuController{}, "get:GetAdminMenuItem")
-
-    web.Router("/adminPermission/create", &controllers.AdminPermissionController{}, "post:CreateAdminPermission")
-    web.Router("/adminPermission/update/:id", &controllers.AdminPermissionController{}, "post:UpdateAdminPermission")
-    web.Router("/adminPermission/delete", &controllers.AdminPermissionController{}, "post:DeleteAdminPermission")
-    web.Router("/adminPermission/list", &controllers.AdminPermissionController{}, "get:AdminPermissionList")
-    web.Router("/adminPermission/treeList", &controllers.AdminPermissionController{}, "get:AdminPermissionTreeList")
 
     web.Router("/adminResourceCategory/create", &controllers.AdminResourceCategoryController{}, "post:CreateAdminResourceCategory")
     web.Router("/adminResourceCategory/update/:id", &controllers.AdminResourceCategoryController{}, "post:UpdateAdminResourceCategory")
@@ -52,8 +44,6 @@ func init() {
     web.Router("/adminRole/create", &controllers.AdminRoleController{}, "post:CreateAdminRole")
     web.Router("/adminRole/update/:id", &controllers.AdminRoleController{}, "post:UpdateAdminRole")
     web.Router("/adminRole/delete", &controllers.AdminRoleController{}, "post:DeleteAdminRole")
-    web.Router("/adminRole/permission/update", &controllers.AdminRoleController{}, "post:UpdateAdminRolePermission")
-    web.Router("/adminRole/permission/:roleId", &controllers.AdminRoleController{}, "get:AdminRolePermissionList")
     web.Router("/adminRole/list", &controllers.AdminRoleController{}, "get:AdminRoleList")
     web.Router("/adminRole/listAll", &controllers.AdminRoleController{}, "get:AdminRoleListAll")
     web.Router("/adminRole/updateStatus/:roleId", &controllers.AdminRoleController{}, "post:UpdateAdminRoleStatus")
@@ -61,4 +51,15 @@ func init() {
     web.Router("/adminRole/listResource/:roleId", &controllers.AdminRoleController{}, "get:AdminRoleResourceList")
     web.Router("/adminRole/allocMenu", &controllers.AdminRoleController{}, "post:AllocAdminRoleMenu")
     web.Router("/adminRole/allocResource", &controllers.AdminRoleController{}, "post:AllocAdminRoleResource")
+
+    web.Router("/article/create", &controllers.ArticleController{}, "post:CreateArticle")
+    web.Router("/article/update/:id", &controllers.ArticleController{}, "post:UpdateArticle")
+    web.Router("/article/delete/:id", &controllers.ArticleController{}, "post:DeleteArticle")
+    web.Router("/article/list", &controllers.ArticleController{}, "get:ArticleList")
+
+    web.Router("/frontUser/create", &controllers.FrontUserController{}, "post:CreateFrontUser")
+    web.Router("/frontUser/update/:id", &controllers.FrontUserController{}, "post:UpdateFrontUser")
+    web.Router("/frontUser/delete/:id", &controllers.FrontUserController{}, "post:DeleteFrontUser")
+    web.Router("/frontUser/list", &controllers.FrontUserController{}, "get:FrontUserList")
+
 }

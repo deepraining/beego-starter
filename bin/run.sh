@@ -1,12 +1,17 @@
 #!/bin/bash
 
-# Usage: sh run.sh [start|stop|restart|status]
+# Usage: sh run.sh [start|stop|restart|status|version]
+# 运行项目的脚本
+
+# 二进制文件名
 BIN_NAME=beego-starter
 # Server env
 SERVER_ENV=prod
+# 版本文件（会将正在运行的版本号放在这个文件中）
+VERSION_FILE='version.txt'
 
 usage() {
-  echo "Usage: sh $0 [start|stop|restart|status]"
+  echo "Usage: sh $0 [start|stop|restart|status|version]"
   exit 1
 }
 
@@ -53,6 +58,14 @@ restart(){
   start
 }
 
+version(){
+  if [ -f $VERSION_FILE ]; then
+    cat $VERSION_FILE
+  else
+    echo "No version found"
+  fi
+}
+
 case "$1" in
   "start")
     start
@@ -65,6 +78,9 @@ case "$1" in
     ;;
   "restart")
     restart
+    ;;
+  "version")
+    version
     ;;
   *)
     usage

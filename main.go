@@ -7,6 +7,7 @@ import (
     _ "github.com/beego/beego/v2/client/cache/redis"
     "github.com/beego/beego/v2/core/logs"
     "github.com/beego/beego/v2/server/web"
+    "github.com/bwmarrin/snowflake"
     "github.com/deepraining/beego-starter/cache"
     _ "github.com/deepraining/beego-starter/routers"
     "github.com/deepraining/beego-starter/utils"
@@ -21,6 +22,7 @@ func main() {
     initDB()
     initCache()
     initLogger()
+    initUuid()
 
     web.Run()
 }
@@ -122,3 +124,12 @@ func initLogger() {
     }
 }
 
+func initUuid()  {
+    uuidNode, _ := web.AppConfig.Int64("uuidNode")
+    node, err := snowflake.NewNode(uuidNode)
+    if err != nil {
+        logs.Error("初始化uuid生成器:", err)
+        os.Exit(1)
+    }
+    utils.InitUuid(node)
+}

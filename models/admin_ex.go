@@ -5,32 +5,43 @@ type AdminMenuNode struct {
     Children *[]AdminMenuNode `json:"children"`
 }
 
-type AdminPermissionNode struct {
-    AdminPermission
-    Children *[]AdminPermissionNode `json:"children"`
-}
-
 type AdminUserDetails struct {
     AdminUser
     ResourceList *[]AdminResource `json:"resourceList"`
 }
 
 type AdminUserParam struct {
-    Username string
-    Password string
-    Avatar string
-    Email string
-    Nickname string
-    Note string
+    Username string `json:"username"`
+    Password string `json:"password"`
+    Avatar string `json:"avatar"`
+    Email string `json:"email"`
+    Nickname string `json:"nickname"`
+    Note string `json:"note"`
 }
 
 type AdminLoginParam struct {
-    Username string
-    Password string
+    Username string `json:"username"`
+    Password string `json:"password"`
 }
 
-type UpdateAdminUserPasswordParam struct {
-    Username string
-    OldPassword string
-    NewPassword string
+type AdminUpdatePasswordParam struct {
+    Username string `json:"username"`
+    OldPassword string `json:"oldPassword"`
+    NewPassword string `json:"newPassword"`
+}
+
+type ArticleCreateParam struct {
+    Title string `json:"title"`
+    Intro string `json:"intro"`
+    Content string `json:"content"`
+}
+
+type ArticleRecord struct {
+    Article
+    FrontUser FrontUser `json:"frontUser"`
+}
+
+type FrontUserCreateParam struct {
+    Username string `json:"username"`
+    Email string `json:"email"`
 }

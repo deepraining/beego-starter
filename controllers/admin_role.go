@@ -98,9 +98,9 @@ func (c *AdminRoleController) AdminRoleListAll()  {
 func (c *AdminRoleController) AdminRoleList()  {
     pageNum := utils.StringToInt64(c.Ctx.Input.Query("pageNum"), 1)
     pageSize := utils.StringToInt64(c.Ctx.Input.Query("pageSize"), 5)
-    keyword := c.Ctx.Input.Query("keyword")
+    searchKey := c.Ctx.Input.Query("searchKey")
 
-    err, list, total := service.AdminRoleList(keyword, pageSize, pageNum)
+    err, list, total := service.AdminRoleList(searchKey, pageSize, pageNum)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))
     }
@@ -113,47 +113,6 @@ func (c *AdminRoleController) AdminRoleList()  {
     })
 }
 
-// 获取相应角色权限
-func (c *AdminRoleController) AdminRolePermissionList() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
-    if roleId == 0 {
-        c.ApiFail("参数错误")
-    }
-    err, data := service.AdminRolePermissionList(roleId)
-    if err != nil {
-        c.ApiFail(utils.NormalizeErrorMessage(err))
-    }
-    c.ApiSucceed(data)
-}
-
-// 修改角色权限
-func (c *AdminRoleController) UpdateAdminRolePermission() {
-    roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
-    if roleId == 0 {
-        c.ApiFail("参数错误")
-    }
-    // 1,2,3,4
-    idsStr := c.Ctx.Input.Query("permissionIds")
-    if idsStr == "" {
-        c.ApiFail("参数错误")
-    }
-    idStrList := strings.Split(idsStr, ",")
-    ids := []int64{}
-    for _, idStr := range idStrList{
-        id, _ := strconv.Atoi(idStr)
-        ids = append(ids, int64(id))
-    }
-    err, count := service.UpdateAdminRolePermission(roleId, &ids)
-    if err != nil {
-        c.ApiFail(utils.NormalizeErrorMessage(err))
-    }
-    if count > 0 {
-        c.ApiSucceed(count)
-    } else {
-        c.ApiFail("")
-    }
-}
-
 // 修改角色状态
 func (c *AdminRoleController) UpdateAdminRoleStatus() {
     roleId := utils.StringToInt64(c.Ctx.Input.Param(":roleId"), 0)
@@ -161,7 +120,7 @@ func (c *AdminRoleController) UpdateAdminRoleStatus() {
         c.ApiFail("参数错误")
     }
     status := utils.StringToInt64(c.Ctx.Input.Query("status"), 0)
-    adminRole := &models.AdminRole{Status: int32(status)}
+    adminRole := &models.AdminRole{Status: int64(status)}
     err, count := service.UpdateAdminRole(roleId, adminRole)
     if err != nil {
         c.ApiFail(utils.NormalizeErrorMessage(err))

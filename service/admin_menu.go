@@ -7,6 +7,21 @@ import (
     "github.com/jinzhu/copier"
 )
 
+// 创建菜单
+func CreateAdminMenu(adminMenu *models.AdminMenu) (error, int64) {
+    err := updateAdminMenuLevel(adminMenu)
+    if err != nil {
+        logs.Error(err)
+        return err, 0
+    }
+    result := utils.GetDB().Create(adminMenu)
+    if result.Error != nil {
+        logs.Error(result.Error)
+        return result.Error, 0
+    }
+    return nil, result.RowsAffected
+}
+
 // 修改菜单层级
 func updateAdminMenuLevel(adminMenu *models.AdminMenu) error {
     if adminMenu.ParentId == 0 {
@@ -29,21 +44,6 @@ func updateAdminMenuLevel(adminMenu *models.AdminMenu) error {
     return nil
 }
 
-// 创建菜单
-func CreateAdminMenu(adminMenu *models.AdminMenu) (error, int64) {
-    err := updateAdminMenuLevel(adminMenu)
-    if err != nil {
-        logs.Error(err)
-        return err, 0
-    }
-    result := utils.GetDB().Create(adminMenu)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-    return nil, result.RowsAffected
-}
-
 // 更新菜单
 func UpdateAdminMenu(id int64, adminMenu *models.AdminMenu) (error, int64) {
     adminMenu.Id = id
@@ -64,7 +64,7 @@ func UpdateAdminMenu(id int64, adminMenu *models.AdminMenu) (error, int64) {
 func UpdateAdminMenuHidden(id int64, hidden int64) (error, int64) {
     adminMenu := &models.AdminMenu{
         Id:     id,
-        Hidden: int32(hidden),
+        Hidden: int64(hidden),
     }
     result := utils.GetDB().Updates(adminMenu)
     if result.Error != nil {
@@ -97,7 +97,6 @@ func DeleteAdminMenu(id int64) (error, int64) {
     }
     return nil, result.RowsAffected
 }
-
 
 // 菜单列表
 func AdminMenuList(parentId int64, pageSize int64, pageNum int64) (error, *[]models.AdminMenu, int64) {

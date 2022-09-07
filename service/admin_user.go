@@ -220,13 +220,13 @@ func GetAdminUserItem(id int64) (error, *models.AdminUser) {
 }
 
 // 用户列表
-func AdminUserList(keyword string, pageSize int64, pageNum int64) (error, *[]models.AdminUser, int64) {
+func AdminUserList(searchKey string, pageSize int64, pageNum int64) (error, *[]models.AdminUser, int64) {
     limit := pageSize
     offset := pageSize * (pageNum - 1)
 
     query := utils.GetDB().Model(&models.AdminUser{})
-    if keyword != "" {
-        query.Where("username like ?", "%"+ keyword +"%").Or("nickname like ?", "%"+ keyword +"%")
+    if searchKey != "" {
+        query.Where("username like ?", "%"+ searchKey +"%").Or("nickname like ?", "%"+ searchKey +"%")
     }
     list := &[]models.AdminUser{}
     var total int64 = 0
@@ -316,134 +316,7 @@ func UpdateAdminUserRole(userId int64, roleIds *[]int64) (error, int64) {
     return nil, 0
 }
 
-// 更新用户权限
-func UpdateAdminUserPermission(userId int64, permissionIds *[]int64) (error, int64) {
-    // 删除原所有权限关系
-    result := utils.GetDB().Where("user_id = ?", userId).Delete(&models.AdminUserPermissionRelation{})
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-
-    if permissionIds == nil || len(*permissionIds) == 0 {
-        return nil, 0
-    }
-
-    // 获取用户所有角色权限
-    rolePermissions := &[]models.AdminPermission{}
-    result = utils.GetDB().Raw(`
-select p.*
-from admin_user_role_relation ar left join admin_role r on ar.role_id = r.id
-  left join admin_role_permission_relation rp on r.id = rp.role_id
-  left join admin_permission p on rp.permission_id=p.id
-  where ar.user_id = ? and p.id is not null
-`, userId).Scan(rolePermissions)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-
-    rolePermissionIds := []int64{}
-    for _, item := range *rolePermissions {
-        rolePermissionIds = append(rolePermissionIds, item.Id)
-    }
-
-    // 筛选出+权限，角色权限里没有，就加上
-    addPermissionIdList := []int64{}
-    for _, item:=range *permissionIds{
-        found := false
-        for _, item2 := range rolePermissionIds{
-            if item == item2 {
-                found = true
-                break
-            }
-        }
-        if !found {
-            addPermissionIdList = append(addPermissionIdList, item)
-        }
-    }
-
-    // 筛选出-权限，角色权限里有，但permissionIds没有，则去掉
-    subPermissionIdList := []int64{}
-    for _, item:=range rolePermissionIds{
-        found := false
-        for _, item2 := range *permissionIds{
-            if item == item2 {
-                found = true
-                break
-            }
-        }
-        if !found {
-            subPermissionIdList = append(addPermissionIdList, item)
-        }
-    }
-
-    relationList := []models.AdminUserPermissionRelation{}
-    relationList = append(relationList, *convertAdminPermissionRelation(userId, 1, &addPermissionIdList)...)
-    relationList = append(relationList, *convertAdminPermissionRelation(userId, 1, &subPermissionIdList)...)
-    result = utils.GetDB().Create(relationList)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, 0
-    }
-    return nil, result.RowsAffected
-}
-
-func convertAdminPermissionRelation(userId int64, type_ int32, permissionIdList *[]int64) *[]models.AdminUserPermissionRelation {
-    relationList := []models.AdminUserPermissionRelation{}
-    for _, item := range *permissionIdList {
-        relation := models.AdminUserPermissionRelation{
-            UserId: userId,
-            Type: type_,
-            PermissionId: item,
-        }
-        relationList = append(relationList, relation)
-    }
-    return &relationList
-}
-
-// 获取权限列表
-func GetAdminPermissionList(userId int64) (error, *[]models.AdminPermission) {
-    list := &[]models.AdminPermission{}
-    result := utils.GetDB().Raw(`
-SELECT
-      p.*
-    FROM
-      admin_user_role_relation ar
-      LEFT JOIN admin_role r ON ar.role_id = r.id
-      LEFT JOIN admin_role_permission_relation rp ON r.id = rp.role_id
-      LEFT JOIN admin_permission p ON rp.permission_id = p.id
-    WHERE
-      ar.user_id = ?
-      AND p.id IS NOT NULL
-      AND p.id NOT IN (
-        SELECT
-          p.id
-        FROM
-          admin_user_permission_relation pr
-          LEFT JOIN admin_permission p ON pr.permission_id = p.id
-        WHERE
-          pr.type = - 1
-          AND pr.user_id = ?
-      )
-    UNION
-    SELECT
-      p.*
-    FROM
-      admin_user_permission_relation pr
-      LEFT JOIN admin_permission p ON pr.permission_id = p.id
-    WHERE
-      pr.type = 1
-      AND pr.user_id = ?
-`, userId).Scan(list)
-    if result.Error != nil {
-        logs.Error(result.Error)
-        return result.Error, nil
-    }
-    return nil, list
-}
-
-func UpdateAdminPassword(param *models.UpdateAdminUserPasswordParam) (error, int64) {
+func UpdateAdminPassword(param *models.AdminUpdatePasswordParam) (error, int64) {
     if param.Username == "" || param.OldPassword == "" || param.NewPassword == "" {
         return nil, -1
     }

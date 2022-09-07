@@ -10,26 +10,26 @@ import (
     "time"
 )
 
-var TokenHeaderKey string
-var secret string
-var expiration int64
-var TokenHead string
+var JwtTokenHeaderKey string
+var jwtSecret string
+var jwtExpiration int64
+var JwtTokenHead string
 
 func init()  {
-    TokenHeaderKey, _ = web.AppConfig.String("jwtTokenHeader")
-    secret, _ = web.AppConfig.String("jwtSecret")
-    expiration, _ = web.AppConfig.Int64("jwtExpiration")
-    TokenHead, _ = web.AppConfig.String("jwtTokenHead")
+    JwtTokenHeaderKey, _ = web.AppConfig.String("jwtTokenHeader")
+    jwtSecret, _ = web.AppConfig.String("jwtSecret")
+    jwtExpiration, _ = web.AppConfig.Int64("jwtExpiration")
+    JwtTokenHead, _ = web.AppConfig.String("jwtTokenHead")
 }
 
 // 根据用户名生成JWT的token
 func GenerateToken(username string) (error, string) {
     claims :=  &jwt.RegisteredClaims{
         Subject: username,
-        ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(expiration) * time.Second)),
+        ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(jwtExpiration) * time.Second)),
     }
     token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-    tokenStr, err := token.SignedString([]byte(secret))
+    tokenStr, err := token.SignedString([]byte(jwtSecret))
     if err != nil {
         logs.Error(err)
         return err, ""
@@ -39,15 +39,15 @@ func GenerateToken(username string) (error, string) {
 
 // 从token中获取登录用户名
 func GetUserNameFromToken(tokenStr string) (error, string)  {
-    if strings.HasPrefix(tokenStr, TokenHead) {
-        tokenStr = tokenStr[len(TokenHead):]
+    if strings.HasPrefix(tokenStr, JwtTokenHead) {
+        tokenStr = tokenStr[len(JwtTokenHead):]
     }
     tokenStr = strings.Trim(tokenStr, " ")
     if tokenStr == "" {
         return nil, ""
     }
     token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-        return []byte(secret), nil
+        return []byte(jwtSecret), nil
     })
 
     if err != nil {
@@ -69,7 +69,7 @@ func RefreshHeadToken(oldToken string) (error, string) {
     if oldToken == "" {
         return nil, ""
     }
-    tokenStr := oldToken[len(TokenHead):]
+    tokenStr := oldToken[len(JwtTokenHead):]
     if tokenStr == "" {
         return nil, ""
     }

@@ -2,6 +2,8 @@
 
 用于快速创建 [Beego](https://beego.vip/) 应用的模板脚手架。
 
+项目功能参考 [spring-boot-starter](https://github.com/deepraining/spring-boot-starter) 的 `pro-admin` 子项目
+
 ## 创建项目
 
 克隆代码，然后根据需要调整项目与代码
@@ -40,11 +42,12 @@ flyway migrate -configFiles=flyway-prod.conf
 
 在服务器上，找个合适的地方创建 `serverDirName` 目录
 
-把本地 `beego-starter, bin/run.sh` 上传到 `serverDirName` 目录，并按实际需要修改 `run.sh` 中 SERVER_ENV 与 BIN_NAME 变量的值
+把本地 `beego-starter, bin/run.sh, bin/select.sh` 上传到 `serverDirName` 目录，并按实际需要修改 `run.sh, select.sh` 中 `SERVER_ENV` 与 `BIN_NAME` 变量的值
 
 ```
 - serverDirName/
   - run.sh              # 运行、停止、重启、查看程序
+  - select.sh           # 运行最新版本的二进制文件
   - beego-starter       # 二进制程序
   ...
 ```
